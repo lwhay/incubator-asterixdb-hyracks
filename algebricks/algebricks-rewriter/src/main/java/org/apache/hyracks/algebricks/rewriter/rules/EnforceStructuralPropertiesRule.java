@@ -1,20 +1,16 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright 2009-2013 by The Regents of the University of California
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * you may obtain a copy of the License from
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.hyracks.algebricks.rewriter.rules;
 
@@ -24,12 +20,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.common.exceptions.NotImplementedException;
+import org.apache.hyracks.algebricks.common.utils.ListSet;
 import org.apache.hyracks.algebricks.common.utils.Pair;
 import org.apache.hyracks.algebricks.core.algebra.base.EquivalenceClass;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalExpression;
@@ -154,10 +152,8 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
         return changed;
     }
 
-    private boolean physOptimizeOp(Mutable<ILogicalOperator> opRef, IPhysicalPropertiesVector required,
+    private int getPreferDelivery(Mutable<ILogicalOperator> opRef, IPhysicalPropertiesVector required,
             boolean nestedPlan, IOptimizationContext context) throws AlgebricksException {
-
-        boolean changed = false;
         AbstractLogicalOperator op = (AbstractLogicalOperator) opRef.getValue();
         optimizeUsingConstraintsAndEquivClasses(op);
         PhysicalRequirements pr = op.getRequiredPhysicalPropertiesForChildren(required);
@@ -165,16 +161,69 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
         if (pr != null) {
             reqdProperties = pr.getRequiredProperties();
         }
-        boolean opIsRedundantSort = false;
 
+        List<IPartitioningProperty> deliveryPartitioning = new ArrayList<IPartitioningProperty>();
+        for (Mutable<ILogicalOperator> childRef : op.getInputs()) {
+            AbstractLogicalOperator child = (AbstractLogicalOperator) childRef.getValue();
+            deliveryPartitioning.add(child.getDeliveredPhysicalProperties().getPartitioningProperty());
+        }
+
+        boolean matched = false;
+        int coveredBranch = 0;
+        for (int i = 0; i < op.getInputs().size(); i++) {
+            if (true == matched) {
+                matched = false;
+                break;
+            }
+            if (null == reqdProperties
+                    || null == reqdProperties[i]
+                    || null == reqdProperties[i].getPartitioningProperty()
+                    || null == deliveryPartitioning.get(i)
+                    || reqdProperties[i].getPartitioningProperty().getPartitioningType() != deliveryPartitioning.get(i)
+                            .getPartitioningType())
+                continue;
+            switch (reqdProperties[i].getPartitioningProperty().getPartitioningType()) {
+                case UNORDERED_PARTITIONED: {
+                    Set<LogicalVariable> covered = new ListSet<LogicalVariable>();
+                    Set<LogicalVariable> setParts = new ListSet<LogicalVariable>();
+                    UnorderedPartitionedProperty upp = (UnorderedPartitionedProperty) reqdProperties[i]
+                            .getPartitioningProperty();
+                    deliveryPartitioning.get(i).getColumns(setParts);
+                    for (LogicalVariable v : setParts) {
+                        for (LogicalVariable r : upp.getColumnSet()) {
+                            if (v == r) {
+                                covered.add(v);
+                                break;
+                            }
+                        }
+                    }
+                    if (covered.equals(setParts)) {
+                        coveredBranch = i;
+                        matched = true;
+                    }
+                    break;
+                }
+                case ORDERED_PARTITIONED:
+                    break;
+                default:
+                    break;
+            }
+        }
+        return coveredBranch;
+    }
+
+    private boolean physOptimizedOpEnforce(AbstractLogicalOperator op, IPhysicalPropertiesVector[] reqdProperties,
+            boolean nestedPlan, IOptimizationContext context, boolean changed, INodeDomain childrenDomain,
+            int coveredBranch) throws AlgebricksException {
         // compute properties and figure out the domain
-        INodeDomain childrenDomain = null;
+        childrenDomain = null;
         {
-            int j = 0;
-            for (Mutable<ILogicalOperator> childRef : op.getInputs()) {
-                AbstractLogicalOperator child = (AbstractLogicalOperator) childRef.getValue();
+            for (int i = 0; i < op.getInputs().size(); i++) {
+                int currentOp = (i + coveredBranch) % op.getInputs().size();
                 // recursive call
-                if (physOptimizeOp(childRef, reqdProperties[j], nestedPlan, context)) {
+                Mutable<ILogicalOperator> childRef = op.getInputs().get(currentOp);
+                AbstractLogicalOperator child = (AbstractLogicalOperator) childRef.getValue();
+                if (physOptimizeOp(childRef, reqdProperties[currentOp], nestedPlan, context)) {
                     changed = true;
                 }
                 child.computeDeliveredPhysicalProperties(context);
@@ -187,10 +236,8 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
                         childrenDomain = DEFAULT_DOMAIN;
                     }
                 }
-                j++;
             }
         }
-
         if (reqdProperties != null) {
             for (int k = 0; k < reqdProperties.length; k++) {
                 IPhysicalPropertiesVector pv = reqdProperties[k];
@@ -200,21 +247,43 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
                 }
             }
         }
+        return changed;
+    }
+
+    private boolean physOptimizeOp(Mutable<ILogicalOperator> opRef, IPhysicalPropertiesVector required,
+            boolean nestedPlan, IOptimizationContext context) throws AlgebricksException {
+
+        boolean changed = false;
+        AbstractLogicalOperator op = (AbstractLogicalOperator) opRef.getValue();
+        optimizeUsingConstraintsAndEquivClasses(op);
+        PhysicalRequirements pr = op.getRequiredPhysicalPropertiesForChildren(required);
+        IPhysicalPropertiesVector[] reqdProperties = null;
+        if (pr != null) {
+            reqdProperties = pr.getRequiredProperties();
+        }
+
+        INodeDomain childrenDomain = null;
+        boolean opIsRedundantSort = false;
+        changed = physOptimizedOpEnforce(op, reqdProperties, nestedPlan, context, changed, childrenDomain, 0);
+
+        int coveredBranch = (op.getInputs().size() == 2) ? getPreferDelivery(opRef, required, nestedPlan, context) : 0;
 
         IPartitioningProperty firstDeliveredPartitioning = null;
-        int i = 0;
-        for (Mutable<ILogicalOperator> childRef : op.getInputs()) {
-            AbstractLogicalOperator child = (AbstractLogicalOperator) childRef.getValue();
+
+        // Handle the conflict of requirement and the delivery
+        for (int j = 0; j < op.getInputs().size(); j++) {
+            int currentOp = (j + coveredBranch) % op.getInputs().size();
+            AbstractLogicalOperator child = (AbstractLogicalOperator) op.getInputs().get(currentOp).getValue();
             IPhysicalPropertiesVector delivered = child.getDeliveredPhysicalProperties();
 
             AlgebricksConfig.ALGEBRICKS_LOGGER.finest(">>>> Properties delivered by " + child.getPhysicalOperator()
                     + ": " + delivered + "\n");
             IPartitioningRequirementsCoordinator prc = pr.getPartitioningCoordinator();
             Pair<Boolean, IPartitioningProperty> pbpp = prc.coordinateRequirements(
-                    reqdProperties[i].getPartitioningProperty(), firstDeliveredPartitioning, op, context);
+                    reqdProperties[currentOp].getPartitioningProperty(), firstDeliveredPartitioning, op, context);
             boolean mayExpandPartitioningProperties = pbpp.first;
             IPhysicalPropertiesVector rqd = new StructuralPropertiesVector(pbpp.second,
-                    reqdProperties[i].getLocalProperties());
+                    reqdProperties[currentOp].getLocalProperties());
 
             AlgebricksConfig.ALGEBRICKS_LOGGER.finest(">>>> Required properties for " + child.getPhysicalOperator()
                     + ": " + rqd + "\n");
@@ -227,9 +296,9 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
 
             if (diff != null) {
                 changed = true;
-                addEnforcers(op, i, diff, rqd, delivered, childrenDomain, nestedPlan, context);
+                addEnforcers(op, currentOp, diff, rqd, delivered, childrenDomain, nestedPlan, context);
 
-                AbstractLogicalOperator newChild = ((AbstractLogicalOperator) op.getInputs().get(i).getValue());
+                AbstractLogicalOperator newChild = ((AbstractLogicalOperator) op.getInputs().get(currentOp).getValue());
 
                 if (newChild != child) {
                     delivered = newChild.getDeliveredPhysicalProperties();
@@ -242,8 +311,8 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
                         break;
                     }
                 }
-
             }
+
             if (firstDeliveredPartitioning == null) {
                 IPartitioningProperty dpp = delivered.getPartitioningProperty();
                 if (dpp.getPartitioningType() == PartitioningType.ORDERED_PARTITIONED
@@ -251,8 +320,6 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
                     firstDeliveredPartitioning = dpp;
                 }
             }
-
-            i++;
         }
 
         if (op.hasNestedPlans()) {
@@ -598,7 +665,6 @@ public class EnforceStructuralPropertiesRule implements IAlgebraicRewriteRule {
             }
             return ordCols;
         }
-
     }
 
     private void setNewOp(Mutable<ILogicalOperator> opRef, AbstractLogicalOperator newOp, IOptimizationContext context)
