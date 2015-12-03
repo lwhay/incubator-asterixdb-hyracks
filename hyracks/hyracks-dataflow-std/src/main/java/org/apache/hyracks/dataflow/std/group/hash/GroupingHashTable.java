@@ -121,7 +121,7 @@ class GroupingHashTable {
             comparators[i] = comparatorFactories[i].createBinaryComparator();
         }
         ftpc = new FrameTuplePairComparator(fields, storedKeys, comparators);
-        tpc = tpcf.createPartitioner();
+        tpc = tpcf.createPartitioner(ctx, -1);
 
         int[] keyFieldsInPartialResults = new int[fields.length];
         for (int i = 0; i < keyFieldsInPartialResults.length; i++) {

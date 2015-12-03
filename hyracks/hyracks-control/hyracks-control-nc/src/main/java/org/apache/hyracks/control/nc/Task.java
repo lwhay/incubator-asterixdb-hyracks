@@ -84,6 +84,8 @@ public class Task implements IHyracksTaskContext, ICounterContext, Runnable {
     private final Set<Thread> pendingThreads;
 
     private IPartitionCollector[] collectors;
+    
+    private final static Map<Integer, IStateObject> stateObj = new HashMap<Integer, IStateObject>();
 
     private IOperatorNodePushable operator;
 
@@ -379,5 +381,15 @@ public class Task implements IHyracksTaskContext, ICounterContext, Runnable {
     @Override
     public void sendApplicationMessageToCC(byte[] message, DeploymentId deploymentId, String nodeId) throws Exception {
         this.ncs.sendApplicationMessageToCC(message, deploymentId, nodeId);
+    }
+
+    @Override
+    public void setGlobalState(int partition, final IStateObject state) {
+        Task.stateObj.put(new Integer(partition), state);
+    }
+
+    @Override
+    public IStateObject getGlobalState(int partition) {
+        return Task.stateObj.get(new Integer(partition));
     }
 }

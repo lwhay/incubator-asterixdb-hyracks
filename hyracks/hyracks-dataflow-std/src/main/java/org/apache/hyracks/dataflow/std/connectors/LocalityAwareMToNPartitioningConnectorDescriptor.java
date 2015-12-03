@@ -41,8 +41,8 @@ public class LocalityAwareMToNPartitioningConnectorDescriptor extends AbstractMT
 
     private ITuplePartitionComputerFactory tpcf;
 
-    public LocalityAwareMToNPartitioningConnectorDescriptor(IConnectorDescriptorRegistry spec, ITuplePartitionComputerFactory tpcf,
-            ILocalityMap localityMap) {
+    public LocalityAwareMToNPartitioningConnectorDescriptor(IConnectorDescriptorRegistry spec,
+            ITuplePartitionComputerFactory tpcf, ILocalityMap localityMap) {
         super(spec);
         this.localityMap = localityMap;
         this.tpcf = tpcf;
@@ -61,7 +61,7 @@ public class LocalityAwareMToNPartitioningConnectorDescriptor extends AbstractMT
     public IFrameWriter createPartitioner(IHyracksTaskContext ctx, RecordDescriptor recordDesc,
             IPartitionWriterFactory edwFactory, int index, int nProducerPartitions, int nConsumerPartitions)
             throws HyracksDataException {
-        return new LocalityAwarePartitionDataWriter(ctx, edwFactory, recordDesc, tpcf.createPartitioner(),
+        return new LocalityAwarePartitionDataWriter(ctx, edwFactory, recordDesc, tpcf.createPartitioner(ctx, index),
                 nConsumerPartitions, localityMap, index);
     }
 

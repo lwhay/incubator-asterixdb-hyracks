@@ -32,6 +32,7 @@ import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.api.io.IIOManager;
 import org.apache.hyracks.api.job.profiling.counters.ICounterContext;
 import org.apache.hyracks.api.resources.IDeallocatable;
+import org.apache.hyracks.control.nc.Task;
 import org.apache.hyracks.control.nc.io.IOManager;
 import org.apache.hyracks.control.nc.io.WorkspaceFileFactory;
 
@@ -59,7 +60,7 @@ public class TestTaskContext implements IHyracksTaskContext {
     @Override
     public ByteBuffer reallocateFrame(ByteBuffer tobeDeallocate, int newSizeInBytes, boolean copyOldData)
             throws HyracksDataException {
-        return jobletContext.reallocateFrame(tobeDeallocate,newSizeInBytes, copyOldData);
+        return jobletContext.reallocateFrame(tobeDeallocate, newSizeInBytes, copyOldData);
 
     }
 
@@ -132,5 +133,14 @@ public class TestTaskContext implements IHyracksTaskContext {
     public void sendApplicationMessageToCC(byte[] message, DeploymentId deploymentId, String nodeId) throws Exception {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void setGlobalState(int partition, final IStateObject state) {
+    }
+
+    @Override
+    public IStateObject getGlobalState(int partition) {
+        return null;
     }
 }

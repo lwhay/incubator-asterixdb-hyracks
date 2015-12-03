@@ -92,7 +92,7 @@ public class HashSpillableTableFactory implements ISpillableTableFactory {
 
         final FrameTuplePairComparator ftpcTuple = new FrameTuplePairComparator(storedKeys, storedKeys, comparators);
 
-        final ITuplePartitionComputer tpc = tpcf.createPartitioner();
+        final ITuplePartitionComputer tpc = tpcf.createPartitioner(ctx, -1);
 
         final INormalizedKeyComputer nkc = firstKeyNormalizerFactory == null ? null : firstKeyNormalizerFactory
                 .createNormalizedKeyComputer();

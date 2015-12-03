@@ -19,6 +19,7 @@
 package org.apache.hyracks.api.context;
 
 import org.apache.hyracks.api.dataflow.TaskAttemptId;
+import org.apache.hyracks.api.dataflow.state.IStateObject;
 import org.apache.hyracks.api.dataset.IDatasetPartitionManager;
 import org.apache.hyracks.api.deployment.DeploymentId;
 import org.apache.hyracks.api.io.IWorkspaceFileFactory;
@@ -35,6 +36,10 @@ public interface IHyracksTaskContext extends IHyracksCommonContext, IWorkspaceFi
     public ICounterContext getCounterContext();
 
     public IDatasetPartitionManager getDatasetPartitionManager();
+    
+    public void setGlobalState(int partition, IStateObject state);
+    
+    public IStateObject getGlobalState(int partition);
 
     public void sendApplicationMessageToCC(byte[] message, DeploymentId deploymendId, String nodeId) throws Exception;
 }
