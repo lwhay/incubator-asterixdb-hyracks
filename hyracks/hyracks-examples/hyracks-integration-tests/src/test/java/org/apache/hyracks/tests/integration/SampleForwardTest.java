@@ -117,10 +117,8 @@ public class SampleForwardTest extends AbstractIntegrationTest {
             outputRaw[i] = File.createTempFile("raw-" + i + "-", null, new File("data"));
         }
         FileSplit[] custSplits = new FileSplit[] {
-                new FileSplit(NC1_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer1.tbl"))),
-                new FileSplit(NC2_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer2.tbl"))) };
+                new FileSplit(NC1_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))),
+                new FileSplit(NC2_ID, new FileReference(new File("data/tpch0.001/customer-part2.tbl"))) };
 
         IFileSplitProvider custSplitsProvider = new ConstantFileSplitProvider(custSplits);
         RecordDescriptor custDesc = new RecordDescriptor(new ISerializerDeserializer[] {
@@ -205,10 +203,8 @@ public class SampleForwardTest extends AbstractIntegrationTest {
             outputRaw[i] = File.createTempFile("raw-" + i + "-", null, new File("data"));
         }
         FileSplit[] custSplits = new FileSplit[] {
-                new FileSplit(NC1_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer1.tbl"))),
-                new FileSplit(NC2_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer2.tbl"))) };
+                new FileSplit(NC1_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))),
+                new FileSplit(NC2_ID, new FileReference(new File("data/tpch0.001/customer-part2.tbl"))) };
         IFileSplitProvider custSplitsProvider = new ConstantFileSplitProvider(custSplits);
         RecordDescriptor custDesc = new RecordDescriptor(new ISerializerDeserializer[] {
                 IntegerSerializerDeserializer.INSTANCE, UTF8StringSerializerDeserializer.INSTANCE,
@@ -282,7 +278,7 @@ public class SampleForwardTest extends AbstractIntegrationTest {
         runTest(spec);
     }
 
-//        @Test
+    //        @Test
     public void sampleForward_Total() throws Exception {
         JobSpecification spec = new JobSpecification();
         File[] outputFile = new File[outputFiles];
@@ -290,10 +286,8 @@ public class SampleForwardTest extends AbstractIntegrationTest {
             outputFile[i] = File.createTempFile("output-" + i + "-", null, new File("data"));
         }
         FileSplit[] custSplits = new FileSplit[] {
-                new FileSplit(NC1_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer1.tbl"))),
-                new FileSplit(NC2_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer2.tbl"))) };
+                new FileSplit(NC1_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))),
+                new FileSplit(NC2_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))) };
         IFileSplitProvider custSplitsProvider = new ConstantFileSplitProvider(custSplits);
         RecordDescriptor custDesc = new RecordDescriptor(new ISerializerDeserializer[] {
                 IntegerSerializerDeserializer.INSTANCE, UTF8StringSerializerDeserializer.INSTANCE,
@@ -390,10 +384,8 @@ public class SampleForwardTest extends AbstractIntegrationTest {
             outputFile[i] = File.createTempFile("output-" + i + "-", null, new File("data"));
         }
         FileSplit[] custSplits = new FileSplit[] {
-                new FileSplit(NC1_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer1.tbl"))),
-                new FileSplit(NC2_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer2.tbl"))) };
+                new FileSplit(NC1_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))),
+                new FileSplit(NC2_ID, new FileReference(new File("data/tpch0.001/customer-part2.tbl"))) };
         IFileSplitProvider custSplitsProvider = new ConstantFileSplitProvider(custSplits);
         RecordDescriptor custDesc = new RecordDescriptor(new ISerializerDeserializer[] {
                 IntegerSerializerDeserializer.INSTANCE, UTF8StringSerializerDeserializer.INSTANCE,
@@ -478,10 +470,8 @@ public class SampleForwardTest extends AbstractIntegrationTest {
             outputRaw[i] = File.createTempFile("raw-" + i + "-", null, new File("data"));
         }
         FileSplit[] custSplits = new FileSplit[] {
-                new FileSplit(NC1_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer1.tbl"))),
-                new FileSplit(NC2_ID, new FileReference(new File(
-                        "/Users/michael/Desktop/tpch_2_16_1/dbgen/customer2.tbl"))) };
+                new FileSplit(NC1_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))),
+                new FileSplit(NC2_ID, new FileReference(new File("data/tpch0.001/customer-part2.tbl"))) };
         //        FileSplit[] custSplits = new FileSplit[] {
         //                new FileSplit(NC1_ID, new FileReference(new File("data/tpch0.001/customer-part1.tbl"))),
         //                new FileSplit(NC2_ID, new FileReference(new File("data/tpch0.001/customer-part2.tbl"))) };

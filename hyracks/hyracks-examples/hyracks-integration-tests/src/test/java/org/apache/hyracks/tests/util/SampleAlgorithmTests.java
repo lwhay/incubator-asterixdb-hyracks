@@ -72,9 +72,9 @@ public class SampleAlgorithmTests extends TestCase {
     private final static boolean randomSample = true;
     private final static boolean coveredTest = false;
 
-    //    private final static String filePath = "data/tpch0.001/lineitem.tbl";
+    private final static String filePath = "data/tpch0.001/lineitem.tbl";
 
-    private final static String filePath = "/Users/michael/Desktop/tpch_2_16_1/dbgen/lineitem.tbl";
+    //private final static String filePath = "/Users/michael/Desktop/tpch_2_16_1/dbgen/lineitem.tbl";
 
     @Before
     public void setUpStreams() {
@@ -465,7 +465,7 @@ public class SampleAlgorithmTests extends TestCase {
 
     @Test
     public void testZipfanRandom() throws Exception {
-        String zipFanFilePath = "/Users/michael/chenli/whu/algorithm/skew.txt";
+        String zipFanFilePath = "data/skew/zipfan.tbl";
         /*for (int part = 20; part < 1025; part *= 200) {
             for (int scale = 1; scale < 3; scale++) {
                 PARTITION_CARD = part;*/
